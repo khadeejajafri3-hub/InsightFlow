@@ -1,101 +1,106 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-
+import os
+import uuid
+import threading
+from flask import Flask, render_template, request, send_from_directory, jsonify, url_for
+from werkzeug.utils import secure_filename
+from generator import VideoReportGenerator
 
 app = Flask(__name__)
-app.secret_key = 'secretkey'  #secret key for session management
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False #to suppress a warning from SQLAlchemy
-db = SQLAlchemy(app) #initialize the database
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['STATIC_VIDEOS'] = os.path.join('static', 'videos')
+app.config['SECRET_KEY'] = 'video-gen-secret-key'
 
-# User model
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(100), unique=True)
-    password = db.Column(db.String(200))
-    cpass = db.Column(db.String(100))
+# Ensure directories exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['STATIC_VIDEOS'], exist_ok=True)
 
-# Database initialization with app context
-with app.app_context(): 
-    db.create_all()
+ALLOWED_EXTENSIONS_CSV = {'csv'}
+ALLOWED_EXTENSIONS_MUSIC = {'mp3', 'wav'}
+
+def allowed_file(filename, allowed_set):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_set
+
+# Dictionary to store job status
+jobs = {}
+
+def generate_video_job(job_id, csv_path, music_path, theme, narrate, lang):
+    try:
+        jobs[job_id]['status'] = 'processing'
+        generator = VideoReportGenerator(theme=theme)
+        
+        output_filename = f"report_{job_id}.mp4"
+        output_path = os.path.join(app.config['STATIC_VIDEOS'], output_filename)
+        
+        # We need a base config or it will use the default sample data logic in generator.py
+        # Actually, VideoReportGenerator.generate_report handles csv_path and generates insights.
+        # We can pass an empty config if we provide csv_path.
+        
+        final_path = generator.generate_report(
+            config={'sections': []}, # Will be populated if csv_path is provided
+            output_file=output_path,
+            csv_path=csv_path,
+            music_file=music_path,
+            music_volume=0.15,
+            narrate=narrate,
+            narration_lang=lang
+        )
+        
+        jobs[job_id]['status'] = 'completed'
+        jobs[job_id]['video_url'] = url_for('static', filename=f'videos/{output_filename}')
+    except Exception as e:
+        print(f"Error generating video: {e}")
+        jobs[job_id]['status'] = 'failed'
+        jobs[job_id]['error'] = str(e)
 
 @app.route('/')
 def home():
     return render_template('home.html')
-@app.route('/upload')
+
+@app.route('/')
 def upload():
     return render_template('upload.html')
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        action = request.form.get('action')
+@app.route('/generate', methods=['POST'])
+def generate():
+    csv_file = request.files.get('csv_file')
+    music_file = request.files.get('music_file')
+    theme = request.form.get('theme', 'vibrant')
+    narrate = request.form.get('narrate') == 'on'
+    lang = request.form.get('lang', 'en')
 
-        # Handle login
-        if action == 'login':
-            email = request.form.get('email', '').strip()
-            password = request.form.get('password', '')
-            user = User.query.filter_by(email=email).first()
+    if not csv_file or csv_file.filename == '':
+        return jsonify({'error': 'No CSV file uploaded'}), 400
 
-            if user and check_password_hash(user.password, password):
-                session['user_id'] = user.id
-                session['user_name'] = getattr(user, 'name', None) or user.email
-                flash('Login successful!', 'success')
-                return redirect(url_for('home'))
-            else:
-                flash('Invalid email or password.', 'error')
-                return redirect(url_for('register'))
+    if not allowed_file(csv_file.filename, ALLOWED_EXTENSIONS_CSV):
+        return jsonify({'error': 'Invalid CSV file format'}), 400
 
-        # Handle signup
-        if action == 'signup':
-            email = request.form.get('email', '').strip()
-            password = request.form.get('password', '')
-            cpass = request.form.get('cpass', '')
+    job_id = str(uuid.uuid4())
+    csv_filename = secure_filename(f"{job_id}_{csv_file.filename}")
+    csv_path = os.path.join(app.config['UPLOAD_FOLDER'], csv_filename)
+    csv_file.save(csv_path)
 
-        #validations
-      
-        
-        if not email or '@' not in email:
-            flash('Please enter a valid email address.', 'error')
-            return redirect(url_for('register'))
-        
-        #password must be at least 8 characters long and a combination of letters and numbers and special characters
-        if len(password)<8 or not any(char.isdigit() for char in password)\
-              or not any(char.isalpha() for char in password) or not any(not char.isalnum()\
-                                                                          for char in password):
-            flash('Password must be at least 8 characters long and contain letters, \
-                  numbers, and special characters.', 'error')
-            return redirect(url_for('register'))
-        
-        if password != cpass:
-            flash('Passwords do not match.', 'error')
-            return redirect(url_for('register'))
-        
-        #check if user already exists
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            flash('Email already registered. Please log in.', 'error')
-            return redirect(url_for('register'))
-        
-        #create new user
-        hashed_password = generate_password_hash(password)
-        new_user = User(
-            email=email.strip(),
-            password=hashed_password,
-            cpass=None
-        )
-        try:
-            db.session.add(new_user)
-            db.session.commit()
-            flash('Registration successful! Please log in.', 'success')
-            return redirect(url_for('home'))
-        except Exception as e:
-            db.session.rollback()
-            flash('An error occurred during registration. Please try again.', 'error')
-            return redirect(url_for('register'))   
-   
-    return render_template('register.html')
+    music_path = None
+    if music_file and music_file.filename:
+        filename = music_file.filename
+        if allowed_file(filename, ALLOWED_EXTENSIONS_MUSIC):
+            music_filename = secure_filename(f"{job_id}_{filename}")
+            music_path = os.path.join(app.config['UPLOAD_FOLDER'], music_filename)
+            music_file.save(music_path)
+
+    jobs[job_id] = {'status': 'queued'}
+    
+    # Run generation in background thread
+    thread = threading.Thread(target=generate_video_job, args=(job_id, csv_path, music_path, theme, narrate, lang))
+    thread.start()
+
+    return jsonify({'job_id': job_id})
+
+@app.route('/status/<job_id>')
+def status(job_id):
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({'error': 'Job not found'}), 404
+    return jsonify(job)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
