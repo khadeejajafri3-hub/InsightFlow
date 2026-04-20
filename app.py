@@ -53,6 +53,10 @@ def generate_video_job(job_id, csv_path, music_path, theme, narrate, lang):
         jobs[job_id]['error'] = str(e)
 
 @app.route('/')
+def home():
+    return render_template('home.html')
+
+@app.route('/')
 def upload():
     return render_template('upload.html')
 
