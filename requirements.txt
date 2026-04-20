@@ -1,0 +1,9 @@
+flask
+moviepy
+gtts
+pydub
+pillow
+matplotlib
+pandas
+numpy
+flask-cors

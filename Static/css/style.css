@@ -1,601 +1,184 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About Us – InsightFlow</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --navy-deepest: #040d1a;
-      --navy-deep:    #071428;
-      --navy-mid:     #0a1f3c;
-      --navy-base:    #0d2752;
-      --navy-light:   #123066;
-      --accent-gold:  #e8c46a;
-      --accent-cyan:  #38d9f5;
-      --text-primary: #f0f6ff;
-      --text-muted:   #8aaacf;
-      --text-soft:    #c5d9ef;
-      --card-bg:      rgba(13,39,82,0.55);
-      --card-border:  rgba(56,217,245,0.12);
+:root {
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --bg-dark: #0f172a;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #10b981;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-dark);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0, transparent 50%);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+    flex: 1;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    background: linear-gradient(to right, #818cf8, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+p.subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
     }
- 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
- 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background-color: var(--navy-deepest);
-      color: var(--text-primary);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
- 
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(56,217,245,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(56,217,245,0.04) 1px, transparent 1px);
-      background-size: 48px 48px;
-      pointer-events: none;
-      z-index: 0;
-    }
- 
-    body::after {
-      content: '';
-      position: fixed;
-      top: -30vh;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80vw;
-      height: 80vh;
-      background: radial-gradient(ellipse at center, rgba(19,64,130,0.55) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
- 
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.1rem 5vw;
-      background: rgba(4,13,26,0.82);
-      backdrop-filter: blur(18px);
-      border-bottom: 1px solid var(--card-border);
-    }
- 
-    .nav-logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-    .nav-logo span { color: var(--accent-cyan); }
- 
-    .nav-links { display: flex; gap: 2rem; list-style: none; }
-    .nav-links a {
-      font-size: 0.88rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--accent-cyan); }
- 
-    .nav-cta {
-      padding: 0.45rem 1.2rem;
-      background: linear-gradient(135deg, var(--accent-cyan), #1ab8d6);
-      color: var(--navy-deepest) !important;
-      border-radius: 6px;
-      font-weight: 600 !important;
-    }
- 
-    .hero {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 7rem 5vw 5rem;
-      max-width: 860px;
-      margin: 0 auto;
-    }
- 
-    .hero-eyebrow {
-      display: inline-block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--accent-cyan);
-      background: rgba(56,217,245,0.08);
-      border: 1px solid rgba(56,217,245,0.25);
-      padding: 0.35rem 1.1rem;
-      border-radius: 50px;
-      margin-bottom: 1.6rem;
-      animation: fadeUp 0.7s ease both;
-    }
- 
-    h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(2.8rem, 6vw, 4.8rem);
-      font-weight: 900;
-      line-height: 1.12;
-      color: var(--text-primary);
-      animation: fadeUp 0.8s 0.1s ease both;
-    }
- 
-    h1 .highlight {
-      color: var(--accent-cyan);
-      position: relative;
-      display: inline-block;
-    }
- 
-    h1 .highlight::after {
-      content: '';
-      position: absolute;
-      bottom: 4px;
-      left: 0;
-      width: 100%;
-      height: 3px;
-      background: var(--accent-cyan);
-      border-radius: 2px;
-      opacity: 0.4;
-    }
- 
-    .hero-tagline {
-      margin-top: 1.5rem;
-      font-size: 1.15rem;
-      line-height: 1.8;
-      color: var(--text-soft);
-      max-width: 620px;
-      margin-left: auto;
-      margin-right: auto;
-      animation: fadeUp 0.9s 0.2s ease both;
-    }
- 
-    section {
-      position: relative;
-      z-index: 1;
-      padding: 5rem 5vw;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
- 
-    .section-label {
-      font-size: 0.75rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--accent-gold);
-      font-weight: 600;
-      margin-bottom: 0.7rem;
-    }
- 
-    h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1.9rem, 3.5vw, 2.8rem);
-      font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.22;
-      margin-bottom: 1.2rem;
-    }
- 
-    p {
-      font-size: 1rem;
-      line-height: 1.85;
-      color: var(--text-soft);
-      margin-bottom: 1.2rem;
-    }
- 
-    .divider {
-      width: 60px;
-      height: 3px;
-      background: linear-gradient(90deg, var(--accent-cyan), transparent);
-      border-radius: 2px;
-      margin: 1.4rem 0 2rem;
-    }
- 
-    .what-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2.5rem;
-      align-items: center;
-      margin-top: 3rem;
-    }
- 
-    .what-visual {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 2rem;
-      backdrop-filter: blur(12px);
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
- 
-    .mini-chart {
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-      height: 80px;
-    }
- 
-    .bar {
-      flex: 1;
-      border-radius: 4px 4px 0 0;
-      background: linear-gradient(180deg, var(--accent-cyan), rgba(56,217,245,0.25));
-      animation: growBar 1.2s ease both;
-    }
- 
-    @keyframes growBar { from { transform: scaleY(0); transform-origin: bottom; } }
-    .bar:nth-child(1) { height: 45%; animation-delay: 0.1s; }
-    .bar:nth-child(2) { height: 70%; animation-delay: 0.2s; }
-    .bar:nth-child(3) { height: 55%; animation-delay: 0.3s; }
-    .bar:nth-child(4) { height: 90%; animation-delay: 0.4s; }
-    .bar:nth-child(5) { height: 62%; animation-delay: 0.5s; }
-    .bar:nth-child(6) { height: 80%; animation-delay: 0.6s; }
- 
-    .insight-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--accent-cyan);
-      background: rgba(56,217,245,0.1);
-      border: 1px solid rgba(56,217,245,0.2);
-      padding: 0.3rem 0.9rem;
-      border-radius: 50px;
-      width: fit-content;
-    }
- 
-    .dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--accent-cyan);
-      animation: pulse 1.4s infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
- 
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-      margin-top: 3rem;
-    }
- 
-    .feat-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 1.8rem 1.5rem;
-      backdrop-filter: blur(10px);
-      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
-    }
- 
-    .feat-card:hover {
-      transform: translateY(-5px);
-      border-color: rgba(56,217,245,0.3);
-      box-shadow: 0 12px 40px rgba(56,217,245,0.08);
-    }
- 
-    .feat-icon {
-      width: 48px; height: 48px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, rgba(56,217,245,0.15), rgba(56,217,245,0.05));
-      border: 1px solid rgba(56,217,245,0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      margin-bottom: 1.1rem;
-    }
- 
-    .feat-card h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 0.6rem;
-    }
- 
-    .feat-card p { font-size: 0.92rem; margin-bottom: 0; }
- 
-    .audience-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      margin-top: 2.5rem;
-    }
- 
-    .audience-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 1.8rem;
-      backdrop-filter: blur(10px);
-      display: flex;
-      gap: 1.2rem;
-      align-items: flex-start;
-    }
- 
-    .audience-icon { font-size: 2rem; min-width: 2.5rem; line-height: 1; }
- 
-    .audience-card h3 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 0.4rem;
-    }
-    .audience-card p { font-size: 0.9rem; margin-bottom: 0; }
- 
-    .pricing-band {
-      position: relative;
-      z-index: 1;
-      background: linear-gradient(135deg, var(--navy-base), var(--navy-light));
-      border-top: 1px solid var(--card-border);
-      border-bottom: 1px solid var(--card-border);
-      padding: 4rem 5vw;
-      text-align: center;
-      overflow: hidden;
-    }
- 
-    .pricing-band::before {
-      content: '';
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
-      width: 600px; height: 300px;
-      background: radial-gradient(ellipse, rgba(56,217,245,0.12) 0%, transparent 70%);
-      pointer-events: none;
-    }
- 
-    .pricing-band h2 { position: relative; font-size: clamp(1.8rem, 4vw, 2.6rem); }
-    .pricing-band p { max-width: 580px; margin: 1rem auto 2rem; position: relative; }
- 
-    .price-badges {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-      position: relative;
-    }
- 
-    .price-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(56,217,245,0.1);
-      border: 1px solid rgba(56,217,245,0.25);
-      color: var(--accent-cyan);
-      font-size: 0.85rem;
-      font-weight: 500;
-      padding: 0.5rem 1.2rem;
-      border-radius: 50px;
-    }
- 
-    .check-icon { color: #4ade80; }
- 
-    .mission-wrap { max-width: 760px; margin: 0 auto; text-align: center; }
-    .mission-wrap h2 { margin-bottom: 1rem; }
-    .mission-wrap p { font-size: 1.05rem; }
- 
-    footer {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 2rem 5vw;
-      border-top: 1px solid var(--card-border);
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-    footer span { color: var(--accent-cyan); }
- 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(22px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
- 
-    .fade-in {
-      opacity: 0;
-      transform: translateY(24px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-    .fade-in.visible { opacity: 1; transform: translateY(0); }
- 
-    @media (max-width: 768px) {
-      .what-grid, .features-grid, .audience-grid { grid-template-columns: 1fr; }
-      .nav-links { display: none; }
-    }
-  </style>
-</head>
-<body>
- 
-  <nav>
-    <div class="nav-logo">Insight<span>Flow</span></div>
-    <ul class="nav-links">
-      <li><a href="#">Home</a></li>
-      <li><a href="#">Features</a></li>
-      <li><a href="#">Pricing</a></li>
-      <li><a href="#" class="nav-cta">Get Started</a></li>
-    </ul>
-  </nav>
- 
-  <div class="hero">
-    <div class="hero-eyebrow">Our Story &amp; Mission</div>
-    <h1>About <span class="highlight">Us</span></h1>
-    <p class="hero-tagline">
-      We believe everyone deserves to understand their data — not just data scientists.
-      InsightFlow was built to turn raw numbers into clear, beautiful, actionable intelligence.
-    </p>
-  </div>
- 
-  <section class="fade-in">
-    <div class="section-label">What We Do</div>
-    <div class="what-grid">
-      <div>
-        <h2>Turning Raw Data into <em>Real Insight</em></h2>
-        <div class="divider"></div>
-        <p>
-          InsightFlow is an AI-powered data intelligence platform designed for <strong style="color:var(--text-primary);">everyone</strong> — not just technical experts.
-          Whether you run a small business, manage a team, or work in research, simply upload any dataset and receive
-          a full, professional-grade analysis within minutes.
-        </p>
-        <p>
-          Our platform takes your raw data — spreadsheets, CSVs, or reports — and transforms it into
-          interactive charts, smart graphs, and easy-to-read summaries. No formulas. No coding. No confusion.
-          Just clear answers to the questions your data is already trying to tell you.
-        </p>
-        <p>
-          Every insight comes with an <strong style="color:var(--accent-cyan);">AI-generated video</strong> narrated by a natural, human-like voice that walks you
-          through your results step by step, so you never feel lost or overwhelmed.
-        </p>
-      </div>
- 
-      <div class="what-visual">
-        <div class="insight-tag"><div class="dot"></div> AI Analysis Running…</div>
-        <div class="mini-chart">
-          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-        </div>
-        <div style="border-top:1px solid var(--card-border);padding-top:1rem;">
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.5rem;">Key Insight Detected</div>
-          <div style="font-size:0.95rem;color:var(--text-primary);font-weight:500;">📈 Revenue trend up 34% — driven by Q3 product launch</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:0.5rem;">
-          <span style="font-size:0.75rem;padding:3px 10px;border-radius:50px;background:rgba(232,196,106,0.12);color:var(--accent-gold);border:1px solid rgba(232,196,106,0.2);">Auto Chart</span>
-          <span style="font-size:0.75rem;padding:3px 10px;border-radius:50px;background:rgba(56,217,245,0.1);color:var(--accent-cyan);border:1px solid rgba(56,217,245,0.2);">Video Ready</span>
-          <span style="font-size:0.75rem;padding:3px 10px;border-radius:50px;background:rgba(74,222,128,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.2);">AI Voice On</span>
-        </div>
-      </div>
-    </div>
-  </section>
- 
-  <section class="fade-in">
-    <div class="section-label">Core Features</div>
-    <h2>Everything You Need,<br>Nothing You Don't</h2>
-    <div class="divider"></div>
- 
-    <div class="features-grid">
-      <div class="feat-card">
-        <div class="feat-icon">📂</div>
-        <h3>Simple Data Upload</h3>
-        <p>Drag and drop your file — Excel, CSV, or PDF. InsightFlow handles all the processing automatically with zero setup required from your end.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🎥</div>
-        <h3>AI Insight Videos</h3>
-        <p>Receive a personalised video summary of your data, narrated by a natural AI voice. Watch and understand your insights instead of just reading numbers.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">📊</div>
-        <h3>Smart Charts &amp; Graphs</h3>
-        <p>From bar charts to trend lines, our AI automatically selects the best visual format to present your specific data accurately and beautifully.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">💡</div>
-        <h3>Plain-Language Summaries</h3>
-        <p>Every insight is written in simple, jargon-free language. If anyone can understand it without a degree, we've done our job right.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🔍</div>
-        <h3>Deep-Dive for Analysts</h3>
-        <p>Data professionals can explore advanced breakdowns, raw query outputs, and export-ready reports for deeper professional analysis.</p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🔒</div>
-        <h3>Safe &amp; Secure</h3>
-        <p>Your data is encrypted in transit and at rest. We never share, sell, or train on your uploaded information — ever. Your privacy is guaranteed.</p>
-      </div>
-    </div>
-  </section>
- 
-  <section class="fade-in">
-    <div class="section-label">Who It's For</div>
-    <h2>Built for Every Person,<br>Not Just Every Expert</h2>
-    <div class="divider"></div>
-    <p style="max-width:620px;">
-      InsightFlow was designed with one core belief: data understanding should not require a technical degree.
-      Whether you are a seasoned analyst or opening a spreadsheet for the very first time, InsightFlow meets you exactly where you are.
-    </p>
- 
-    <div class="audience-grid">
-      <div class="audience-card">
-        <div class="audience-icon">🧑‍💼</div>
-        <div>
-          <h3>Business Owners &amp; Managers</h3>
-          <p>Understand your sales, operations, or customer trends without hiring a data team. Make confident, evidence-backed decisions every day.</p>
-        </div>
-      </div>
-      <div class="audience-card">
-        <div class="audience-icon">🎓</div>
-        <div>
-          <h3>Students &amp; Researchers</h3>
-          <p>Analyse survey results, academic datasets, and study findings with ease. Present your results with polished, professional-grade visuals.</p>
-        </div>
-      </div>
-      <div class="audience-card">
-        <div class="audience-icon">📈</div>
-        <div>
-          <h3>Data Analysts</h3>
-          <p>Speed up exploratory analysis, auto-generate client-ready reports, and let InsightFlow handle the communication layer while you focus on strategy.</p>
-        </div>
-      </div>
-      <div class="audience-card">
-        <div class="audience-icon">🏪</div>
-        <div>
-          <h3>Small Businesses &amp; Startups</h3>
-          <p>Get enterprise-level data insights at a fraction of the usual cost. No BI software, no consultants — just upload your data and understand it instantly.</p>
-        </div>
-      </div>
-    </div>
-  </section>
- 
-  <div class="pricing-band fade-in">
-    <h2>Powerful Insights, Surprisingly Affordable</h2>
-    <p>
-      We built InsightFlow because advanced data tools should not cost a fortune. Our plans are designed to be
-      accessible for individuals, growing teams, and large organisations alike — with no hidden fees, ever.
-    </p>
-    <div class="price-badges">
-      <div class="price-badge"><span class="check-icon">✓</span> Free plan available</div>
-      <div class="price-badge"><span class="check-icon">✓</span> No credit card to start</div>
-      <div class="price-badge"><span class="check-icon">✓</span> Cancel anytime</div>
-      <div class="price-badge"><span class="check-icon">✓</span> Scales with your needs</div>
-    </div>
-  </div>
- 
-  <section class="fade-in">
-    <div class="mission-wrap">
-      <div class="section-label" style="text-align:center;">Our Mission</div>
-      <h2>Data Clarity for Everyone</h2>
-      <div class="divider" style="margin:1.4rem auto 2rem;"></div>
-      <p>
-        At InsightFlow, our mission is simple: <strong style="color:var(--text-primary);">eliminate the gap between data and understanding.</strong>
-        In a world drowning in numbers, spreadsheets, and reports, we believe the insight hidden inside your data
-        should be accessible to any person — regardless of technical background, industry, or team size.
-      </p>
-      <p>
-        We combine cutting-edge artificial intelligence with thoughtful, human-centred design to deliver
-        a platform that is as delightful to use as it is powerful under the hood.
-        Your data has a story to tell — InsightFlow helps you hear it, clearly and beautifully.
-      </p>
-    </div>
-  </section>
- 
-  <footer>
-    <p>© 2025 <span>InsightFlow</span>. All rights reserved. &nbsp;|&nbsp; Turning data into understanding.</p>
-  </footer>
- 
-  <script>
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-  </script>
-</body>
-</html>
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+label {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+input[type="file"], select {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    color: var(--text-main);
+    outline: none;
+    transition: all 0.2s;
+}
+
+input[type="file"]:hover, select:hover {
+    border-color: var(--primary);
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.checkbox-group input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary);
+}
+
+.btn-generate {
+    grid-column: 1 / -1;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 18px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-generate:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+}
+
+#status-container {
+    margin-top: 40px;
+    display: none;
+}
+
+.status-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+}
+
+.loader {
+    width: 48px;
+    height: 48px;
+    border: 5px solid #FFF;
+    border-bottom-color: var(--primary);
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#video-preview {
+    margin-top: 30px;
+    display: none;
+    width: 100%;
+}
+
+video {
+    width: 100%;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.download-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.download-link:hover {
+    text-decoration: underline;
+}
