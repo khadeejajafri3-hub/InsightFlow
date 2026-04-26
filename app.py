@@ -9,6 +9,9 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['STATIC_VIDEOS'] = os.path.join('static', 'videos')
 app.config['SECRET_KEY'] = 'video-gen-secret-key'
+app.config['SERVER_NAME'] = 'localhost:5000'
+app.config['APPLICATION_ROOT'] = '/'
+app.config['PREFERRED_URL_SCHEME'] = 'http'
 
 # Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -46,7 +49,8 @@ def generate_video_job(job_id, csv_path, music_path, theme, narrate, lang):
         )
         
         jobs[job_id]['status'] = 'completed'
-        jobs[job_id]['video_url'] = url_for('static', filename=f'videos/{output_filename}')
+        with app.app_context():
+            jobs[job_id]['video_url'] = url_for('static', filename=f'videos/{output_filename}')
     except Exception as e:
         print(f"Error generating video: {e}")
         jobs[job_id]['status'] = 'failed'
@@ -56,7 +60,7 @@ def generate_video_job(job_id, csv_path, music_path, theme, narrate, lang):
 def home():
     return render_template('home.html')
 
-@app.route('/')
+@app.route('/upload')
 def upload():
     return render_template('upload.html')
 
