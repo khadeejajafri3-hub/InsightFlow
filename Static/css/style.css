@@ -1,24 +1,48 @@
 :root {
-    --primary: #6366f1;
-    --primary-hover: #4f46e5;
-    --bg-dark: #0f172a;
-    --card-bg: rgba(30, 41, 59, 0.7);
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --accent: #10b981;
+    --primary: #00c6ff;
+    --primary-hover: #0072ff;
+    --bg-dark: #020a1a;
+    --card-bg: rgba(5, 18, 40, 0.7);
+    --text-main: #e8f4ff;
+    --text-muted: #7a9abf;
+    --accent: #00c6ff;
 }
 
 body {
     margin: 0;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: var(--bg-dark);
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0, transparent 50%);
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-dark);
     color: var(--text-main);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Grid bg */
+body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+        linear-gradient(rgba(0,198,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,198,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Ambient glow */
+body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80vw; height: 80vh;
+    background: radial-gradient(ellipse, rgba(0,114,255,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
 }
 
 .container {
@@ -26,6 +50,8 @@ body {
     margin: 40px auto;
     padding: 0 20px;
     flex: 1;
+    position: relative;
+    z-index: 1;
 }
 
 header {
@@ -37,7 +63,7 @@ h1 {
     font-size: 3rem;
     font-weight: 800;
     margin-bottom: 10px;
-    background: linear-gradient(to right, #818cf8, #34d399);
+    background: linear-gradient(135deg, #fff 30%, var(--cyan));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -50,7 +76,7 @@ p.subtitle {
 .glass-card {
     background: var(--card-bg);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0,198,255,0.12);
     border-radius: 24px;
     padding: 40px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
