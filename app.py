@@ -2,25 +2,47 @@ import os
 import uuid
 import threading
 import json
-from flask import Flask, render_template, request, send_from_directory, jsonify, url_for
+from datetime import datetime
+from flask import Flask, render_template, request, send_from_directory, jsonify, url_for, redirect, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from generator import VideoReportGenerator
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'insightflow-super-secret-key'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['STATIC_VIDEOS'] = os.path.join('static', 'videos')
-app.config['SECRET_KEY'] = 'video-gen-secret-key'
-app.config['SERVER_NAME'] = 'localhost:5000'
-app.config['APPLICATION_ROOT'] = '/'
-app.config['PREFERRED_URL_SCHEME'] = 'http'
-
-# Simple in-memory user store for signup/login
-users = {}
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['STATIC_VIDEOS'], exist_ok=True)
 
+# Database Setup
+db = SQLAlchemy(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# User Model
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Initialize Database
+with app.app_context():
+    db.create_all()
+
+# File Helpers
 ALLOWED_EXTENSIONS_CSV = {'csv'}
 ALLOWED_EXTENSIONS_MUSIC = {'mp3', 'wav'}
 
@@ -29,21 +51,15 @@ def allowed_file(filename, allowed_set):
 
 # Persistent Job Store
 JOBS_FILE = 'jobs.json'
-
 def load_jobs():
     if os.path.exists(JOBS_FILE):
         try:
-            with open(JOBS_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            return {}
+            with open(JOBS_FILE, 'r') as f: return json.load(f)
+        except: return {}
     return {}
 
 def save_jobs(jobs_data):
-    with open(JOBS_FILE, 'w') as f:
-        json.dump(jobs_data, f)
-
-jobs = load_jobs()
+    with open(JOBS_FILE, 'w') as f: json.dump(jobs_data, f)
 
 def update_job_status(job_id, status, video_url=None, error=None):
     jobs = load_jobs()
@@ -58,7 +74,6 @@ def generate_video_job(job_id, csv_path, music_path, theme, narrate, lang, repor
         try:
             update_job_status(job_id, 'processing')
             generator = VideoReportGenerator(theme=theme)
-            
             output_filename = f"report_{job_id}.mp4"
             output_path = os.path.join(app.config['STATIC_VIDEOS'], output_filename)
             
@@ -71,58 +86,71 @@ def generate_video_job(job_id, csv_path, music_path, theme, narrate, lang, repor
                 narrate=narrate,
                 narration_lang=lang
             )
-            
             final_filename = os.path.basename(final_path)
             update_job_status(job_id, 'completed', video_url=f"/static/videos/{final_filename}")
         except Exception as e:
             print(f"Error generating video: {e}")
             update_job_status(job_id, 'failed', error=str(e))
 
+# ROUTES
 @app.route('/')
 def home():
     return render_template('home.html')
-@app.route('/upload')
-def upload():
-    return render_template('upload.html')
-
-@app.route('/about')
-def about():
-    return render_template('about.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        action = request.form.get('action')
         email = request.form.get('email')
         password = request.form.get('password')
+        confirm_password = request.form.get('cpass')
 
-        if action == 'signup':
-            confirm_password = request.form.get('cpass')
-            if password != confirm_password:
-                flash('Passwords do not match. Please try again.', 'error')
-                return redirect(url_for('register', show='signup'))
-            if email in users:
-                flash('User already exists. Please login.', 'error')
-                return redirect(url_for('register', show='login'))
-            users[email] = password
-            flash('Signup successful! Please login to continue.', 'success')
-            return redirect(url_for('register', show='login'))
+        if password != confirm_password:
+            flash('Passwords do not match!', 'error')
+            return redirect(url_for('register'))
+        
+        user = User.query.filter_by(email=email).first()
+        if user:
+            flash('Email already registered. Please login.', 'error')
+            return redirect(url_for('login'))
+        
+        new_user = User(email=email, password=generate_password_hash(password, method='pbkdf2:sha256'))
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Signup successful! Please login.', 'success')
+        return redirect(url_for('login'))
 
-        if action == 'login':
-            stored_password = users.get(email)
-            if stored_password and stored_password == password:
-                flash('Login successful! Redirecting to home...', 'success')
-                return redirect(url_for('home'))
-            flash('Invalid email or password. Please try again.', 'error')
-            return redirect(url_for('register', show='login'))
+    return render_template('register.html', show='signup')
 
-    return render_template('register.html')
-
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    return redirect(url_for('register', show='login'))
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        user = User.query.filter_by(email=email).first()
+
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            flash('Welcome back!', 'success')
+            return redirect(url_for('home'))
+        
+        flash('Invalid email or password.', 'error')
+        return redirect(url_for('login'))
+
+    return render_template('register.html', show='login')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+@app.route('/upload')
+@login_required
+def upload():
+    return render_template('upload.html')
 
 @app.route('/generate', methods=['POST'])
+@login_required
 def generate():
     csv_file = request.files.get('csv_file')
     music_file = request.files.get('music_file')
@@ -134,9 +162,6 @@ def generate():
     if not csv_file or csv_file.filename == '':
         return jsonify({'error': 'No CSV file uploaded'}), 400
 
-    if not allowed_file(csv_file.filename, ALLOWED_EXTENSIONS_CSV):
-        return jsonify({'error': 'Invalid CSV file format'}), 400
-
     job_id = str(uuid.uuid4())
     csv_filename = secure_filename(f"{job_id}_{csv_file.filename}")
     csv_path = os.path.join(app.config['UPLOAD_FOLDER'], csv_filename)
@@ -144,26 +169,20 @@ def generate():
 
     music_path = None
     if music_file and music_file.filename:
-        filename = music_file.filename
-        if allowed_file(filename, ALLOWED_EXTENSIONS_MUSIC):
-            music_filename = secure_filename(f"{job_id}_{filename}")
+        if allowed_file(music_file.filename, ALLOWED_EXTENSIONS_MUSIC):
+            music_filename = secure_filename(f"{job_id}_{music_file.filename}")
             music_path = os.path.join(app.config['UPLOAD_FOLDER'], music_filename)
             music_file.save(music_path)
 
-    update_job_status(job_id, 'queued')
-    
-    # Run generation in background thread
     thread = threading.Thread(target=generate_video_job, args=(job_id, csv_path, music_path, theme, narrate, lang, report_title))
     thread.start()
-
     return jsonify({'job_id': job_id})
 
 @app.route('/status/<job_id>')
 def status(job_id):
     current_jobs = load_jobs()
     job = current_jobs.get(job_id)
-    if not job:
-        return jsonify({'error': 'Job not found'}), 404
+    if not job: return jsonify({'error': 'Job not found'}), 404
     return jsonify(job)
 
 if __name__ == '__main__':
