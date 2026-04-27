@@ -1,315 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Registration Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'Login' if show == 'login' else 'Join' }} | InsightFlow AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
 
-<style>
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
 
-body {
-  margin: 0;
-  font-family: Roboto, -apple-system, 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
-  background: #0b1f3a; /* Navy Blue */
-}
+        body {
+            background: var(--bg);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
-/* ======= MAIN SPLIT CONTAINER ======= */
-.main-container {
-  display: flex;
-  height: 100vh;
-}
+        .bg-glow {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #0f172a 100%);
+            z-index: -1;
+        }
 
-/* ======= LEFT IMAGE CONTAINER ======= */
-.left-container {
-  flex: 1;
-  background-image: url("https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=2000&auto=format&fit=crop");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
+        .glow-orb {
+            position: absolute; width: 400px; height: 400px;
+            background: var(--primary);
+            filter: blur(150px);
+            opacity: 0.2;
+            border-radius: 50%;
+            animation: move 20s infinite alternate;
+        }
 
-/* ======= RIGHT FORM CONTAINER ======= */
-.right-container {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+        @keyframes move {
+            0% { transform: translate(-50%, -50%); }
+            100% { transform: translate(50%, 50%); }
+        }
 
-/* ======= EXISTING FORM SECTION ======= */
-.forms-section {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
+        .auth-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            padding: 3rem;
+            border-radius: 2rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
 
-/* Registration Heading (Bold & Visible) */
-.section-title {
-  font-size: 38px;
-  letter-spacing: 1px;
-  color: #ffffff;
-  font-weight: bold;
-}
+        h2 { font-weight: 800; font-size: 2.5rem; margin-bottom: 0.5rem; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        p.subtitle { color: #94a3b8; margin-bottom: 2rem; }
 
-.forms {
-  display: flex;
-  align-items: flex-start;
-  margin-top: 30px;
-}
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; color: #94a3b8; font-size: 0.9rem; }
+        input {
+            width: 100%; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 1rem; border-radius: 1rem; color: white;
+            font-size: 1rem; transition: 0.3s;
+        }
+        input:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.1); }
 
-/* ===== ANIMATION & ORIGINAL STYLES (UNCHANGED) ===== */
+        .btn {
+            width: 100%; padding: 1rem; border-radius: 1rem; border: none;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; font-weight: 600; font-size: 1.1rem; cursor: pointer;
+            transition: 0.3s; margin-top: 1rem;
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px var(--primary); }
 
-.form-wrapper {
-  animation: hideLayer .3s ease-out forwards;
-}
+        .switch { margin-top: 2rem; text-align: center; color: #94a3b8; font-size: 0.9rem; }
+        .switch a { color: var(--primary); text-decoration: none; font-weight: 600; }
 
-.form-wrapper.is-active {
-  animation: showLayer .3s ease-in forwards;
-}
-
-@keyframes showLayer {
-  50% { z-index: 1; }
-  100% { z-index: 1; }
-}
-
-@keyframes hideLayer {
-  0% { z-index: 1; }
-  49.999% { z-index: 1; }
-}
-
-.switcher {
-  position: relative;
-  cursor: pointer;
-  display: block;
-  margin: auto;
-  padding: 0;
-  text-transform: uppercase;
-  font-size: 16px;
-  letter-spacing: .5px;
-  color: #999;
-  background-color: transparent;
-  border: none;
-  outline: none;
-  transition: all .3s ease-out;
-}
-
-.form-wrapper.is-active .switcher-login {
-  color: #fff;
-  transform: translateX(90px);
-}
-
-.form-wrapper.is-active .switcher-signup {
-  color: #fff;
-  transform: translateX(-90px);
-}
-
-.underline {
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  overflow: hidden;
-}
-
-.underline::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-color: currentColor;
-  transition: transform .2s ease-out;
-}
-
-.switcher-login .underline::before {
-  transform: translateX(101%);
-}
-
-.switcher-signup .underline::before {
-  transform: translateX(-101%);
-}
-
-.form-wrapper.is-active .underline::before {
-  transform: translateX(0);
-}
-
-.form {
-  overflow: hidden;
-  min-width: 300px;
-  margin-top: 50px;
-  padding: 35px 30px;
-  border-radius: 10px;
-  transform-origin: top;
-}
-
-.form-login {
-  animation: hideLogin .3s ease-out forwards;
-}
-
-.form-wrapper.is-active .form-login {
-  animation: showLogin .3s ease-in forwards;
-}
-
-@keyframes showLogin {
-  0% { background: #d7e7f1; transform: translate(40%, 10px); }
-  50% { transform: translate(0, 0); }
-  100% { background-color: #fff; transform: translate(35%, -20px); }
-}
-
-@keyframes hideLogin {
-  0% { background-color: #fff; transform: translate(35%, -20px); }
-  50% { transform: translate(0, 0); }
-  100% { background: #d7e7f1; transform: translate(40%, 10px); }
-}
-
-.form-signup {
-  animation: hideSignup .3s ease-out forwards;
-}
-
-.form-wrapper.is-active .form-signup {
-  animation: showSignup .3s ease-in forwards;
-}
-
-@keyframes showSignup {
-  0% { background: #d7e7f1; transform: translate(-40%, 10px) scaleY(.8); }
-  50% { transform: translate(0, 0) scaleY(.8); }
-  100% { background-color: #fff; transform: translate(-35%, -20px) scaleY(1); }
-}
-
-@keyframes hideSignup {
-  0% { background-color: #fff; transform: translate(-35%, -20px) scaleY(1); }
-  50% { transform: translate(0, 0) scaleY(.8); }
-  100% { background: #d7e7f1; transform: translate(-40%, 10px) scaleY(.8); }
-}
-
-.input-block {
-  margin-bottom: 20px;
-}
-
-.input-block label {
-  font-size: 14px;
-  font-weight: bold;
-  color: #0b1f3a;
-}
-
-.input-block input {
-  width: 100%;
-  margin-top: 8px;
-  padding: 0 15px;
-  font-size: 16px;
-  line-height: 40px;
-  background: #eef9fe;
-  border: 1px solid #cddbef;
-  border-radius: 4px;
-}
-
-.form button {
-  min-width: 120px;
-  margin: 30px auto 10px;
-  font-size: 18px;
-  line-height: 40px;
-  border-radius: 25px;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-login {
-  color: #fff;
-  background: #00c896;
-}
-
-.btn-signup {
-  color: #00c896;
-  background: #fff;
-  box-shadow: inset 0 0 0 2px #00c896;
-}
-
-/* flash message styles */
-.flash-message { padding: 12px 16px; border-radius: 6px; margin: 16px auto; max-width: 520px; font-weight: 600; }
-.flash-message.success { background: #d4edda; color: #1b5e20; }
-.flash-message.error { background: #f8d7da; color: #6b0b0b; }
-
-</style>
+        .alert {
+            padding: 1rem; border-radius: 1rem; margin-bottom: 1.5rem;
+            font-size: 0.9rem; border: 1px solid;
+        }
+        .alert-error { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .alert-success { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.2); color: #86efac; }
+    </style>
 </head>
-
 <body>
-  
-{% for category, message in get_flashed_messages(with_categories=True) %}
-  <div class="flash-message {{ category }}">{{ message }}</div>
-{% endfor %}
-<div class="main-container">
+    <div class="bg-glow"></div>
+    <div class="glow-orb" style="top: 20%; left: 20%;"></div>
+    <div class="glow-orb" style="bottom: 20%; right: 20%; background: var(--secondary);"></div>
 
-  <!-- LEFT IMAGE -->
-  <div class="left-container"></div>
+    <div class="auth-card">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-  <!-- RIGHT LOGIN/SIGNUP -->
-  <div class="right-container">
-    <section class="forms-section">
-      <h1 class="section-title">Registeration</h1>
-
-      <div class="forms">
-
-        <div class="form-wrapper {% if request.args.get('show', 'login') == 'login' %}is-active{% endif %}">
-          <button type="button" class="switcher switcher-login">
-            Login
-            <span class="underline"></span>
-          </button>
-          <form method="post" action="/register" class="form form-login">
-            <div class="input-block">
-              <label>E-mail</label>
-              <input id="email" name="email" type="email" required>
+        {% if show == 'login' %}
+            <h2>Welcome Back</h2>
+            <p class="subtitle">Enter your details to access your reports.</p>
+            <form action="{{ url_for('login') }}" method="POST">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" placeholder="name@company.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn">Sign In</button>
+            </form>
+            <div class="switch">
+                Don't have an account? <a href="{{ url_for('register') }}">Create one</a>
             </div>
-            <div class="input-block">
-              <label>Password</label>
-              <input id="password" name="password" type="password" required>
+        {% else %}
+            <h2>Start for Free</h2>
+            <p class="subtitle">Turn your data into stories in seconds.</p>
+            <form action="{{ url_for('register') }}" method="POST">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" placeholder="name@company.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="Create a strong password" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" name="cpass" placeholder="Repeat your password" required>
+                </div>
+                <button type="submit" class="btn">Create Account</button>
+            </form>
+            <div class="switch">
+                Already have an account? <a href="{{ url_for('login') }}">Login here</a>
             </div>
-            <button type="submit" name="action" value="login" class="btn-login">Login</button>
-          </form>
-        </div>
-
-        <div class="form-wrapper {% if request.args.get('show') == 'signup' %}is-active{% endif %}">
-          <button type="button" class="switcher switcher-signup">
-            Sign Up
-            <span class="underline"></span>
-          </button>
-          <form method="post" action="/register" class="form form-signup">
-            <div class="input-block">
-              <label>E-mail</label>
-              <input id="email" name="email" type="email" required>
-            </div>
-            <div class="input-block">
-              <label>Password</label>
-              <input id="password" name="password" type="password" required>
-            </div>
-            <div class="input-block">
-              <label>Confirm password</label>
-              <input id="cpass" name="cpass" type="password" required>
-            </div>
-            <button type="submit" name="action" value="signup" class="btn-signup">Continue</button>
-          </form>
-        </div>
-
-      </div>
-    </section>
-  </div>
-
-</div>
-<script>
-const switchers = [...document.querySelectorAll('.switcher')]
-
-switchers.forEach(item => {
-  item.addEventListener('click', function() {
-    switchers.forEach(item => item.parentElement.classList.remove('is-active'))
-    this.parentElement.classList.add('is-active')
-  })
-})
-</script>
-
+        {% endif %}
+    </div>
 </body>
 </html>
