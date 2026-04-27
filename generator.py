@@ -23,22 +23,29 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 # ── optional heavy deps ────────────────────────────────────────────────────────
 try:
-    from moviepy.editor import (
-        VideoClip, AudioFileClip, CompositeAudioClip,
-        concatenate_videoclips, concatenate_audioclips,
-        ImageClip, VideoFileClip,
-    )
+    # Try MoviePy v1.x style
+    from moviepy.editor import VideoClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, ImageClip, VideoFileClip
     MOVIEPY_OK = True
 except ImportError:
     try:
-        from moviepy import (
-            VideoClip, AudioFileClip, CompositeAudioClip,
-            ImageClip, VideoFileClip,
-            concatenate_videoclips, concatenate_audioclips
-        )
+        # Try MoviePy v2.x style
+        from moviepy import VideoClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, ImageClip, VideoFileClip
         MOVIEPY_OK = True
     except ImportError:
-        MOVIEPY_OK = False
+        try:
+            # Last ditch effort for specific v2 sub-modules
+            from moviepy.video.VideoClip import VideoClip
+            from moviepy.audio.AudioClip import AudioFileClip
+            from moviepy.video.compositing.concatenate import concatenate_videoclips
+            MOVIEPY_OK = True
+        except ImportError:
+            MOVIEPY_OK = False
+
+if not MOVIEPY_OK:
+    # Fallback to prevent NameError even if MOVIEPY_OK is checked later
+    class VideoClip: pass
+    class AudioFileClip: pass
+    print("[CRITICAL] MoviePy not found. Please run: pip install moviepy")
 
 try:
     from gtts import gTTS
