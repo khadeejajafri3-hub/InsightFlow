@@ -12,18 +12,16 @@ import pandas as pd
 # ─────────────────────────────────────────────────────────────
 # GEMINI API
 # ─────────────────────────────────────────────────────────────
+# GEMINI API (Temporarily disabled - provide fresh key to re-enable)
 GEMINI_AVAILABLE = False
-try:
-    import google.generativeai as genai
-    # api_key = os.environ.get("GEMINI_API_KEY")
-    api_key = 'AIzaSyDhwbVrWfHNq5yDSS2gm7YnftXePHAJCAM'
-    print(api_key)
-    if api_key:
-        genai.configure(api_key=api_key)
-        GEMINI_AVAILABLE = True
-except Exception as e:
-    print(f"[Gemini] Not available: {e}")
-    GEMINI_AVAILABLE = False
+# try:
+#     import google.generativeai as genai
+#     api_key = 'AIzaSyDhwbVrWfHNq5yDSS2gm7YnftXePHAJCAM'
+#     if api_key:
+#         genai.configure(api_key=api_key)
+#         GEMINI_AVAILABLE = True
+# except Exception as e:
+#     GEMINI_AVAILABLE = False
 
 
 def _gemini_analyse(df: pd.DataFrame) -> dict | None:
@@ -141,32 +139,76 @@ class HeuristicAnalyser:
         sections = []
         metrics = []
 
+        # 1. Start with a Hero Insight
+        if self.num_cols:
+            col = self.num_cols[0]
+            total = self.df[col].sum()
+            metrics.append({'label': f'Total {col}', 'value': f'{total:,.0f}', 'delta': 'Overall Volume'})
+            
+            # Peak Insight
+            peak_idx = self.df[col].idxmax()
+            peak_val = self.df.loc[peak_idx, col]
+            peak_label = self.df.loc[peak_idx, self.cat_cols[0]] if self.cat_cols else f"Row {peak_idx}"
+            sections.append({'type': 'insight', 'text': f'BOOM! Your peak {col} reached {peak_val:,.0f} with {peak_label}!', 'duration': 4})
+
+        # 2. Generate multiple charts to reach 7-8 target
+        # Chart 1: Bar Chart of first category
+        if self.cat_cols and self.num_cols:
+            grp = self.df.groupby(self.cat_cols[0])[self.num_cols[0]].sum().sort_values(ascending=False).reset_index()
+            sections.append({
+                'type': 'bar', 'data': grp.head(8), 'x': self.cat_cols[0], 'y': self.num_cols[0],
+                'title': f'Top Performers by {self.cat_cols[0]}', 'duration': 6
+            })
+            sections.append({'type': 'insight', 'text': f'Notice how {grp.iloc[0][self.cat_cols[0]]} is dominating the leaderboard.', 'duration': 4})
+
+        # Chart 2: Pie Chart of distribution
+        if self.cat_cols and self.num_cols:
+            sections.append({
+                'type': 'pie', 'data': grp.head(5), 'labels': self.cat_cols[0], 'values': self.num_cols[0],
+                'title': f'Market Share of {self.cat_cols[0]}', 'duration': 6
+            })
+
+        # Chart 3: Line Chart (Trend)
+        if len(self.df) > 1 and self.num_cols:
+            sections.append({
+                'type': 'line', 'data': self.df.head(15), 'x': self.cat_cols[0] if self.cat_cols else self.df.index.name or 'Index',
+                'y': self.num_cols[0], 'title': f'{self.num_cols[0]} Trend Over Time', 'duration': 6
+            })
+
+        # Chart 4: Horizontal Bar (Comparison)
+        if len(self.num_cols) > 1:
+            sections.append({
+                'type': 'hbar', 'data': self.df.head(10), 'x': self.cat_cols[0] if self.cat_cols else self.df.index.name or 'Item',
+                'y': self.num_cols[1], 'title': f'Secondary Metric: {self.num_cols[1]}', 'duration': 6
+            })
+            sections.append({'type': 'insight', 'text': f'Comparing this to {self.num_cols[0]} shows some interesting correlations.', 'duration': 4})
+
+        # Chart 5: Scatter (Relationship)
         if len(self.num_cols) >= 2:
             sections.append({
-                'type': 'scatter',
-                'data': self.df[[self.num_cols[0], self.num_cols[1]]].dropna(),
-                'x': self.num_cols[0],
-                'y': self.num_cols[1],
-                'title': f'{self.num_cols[0]} vs {self.num_cols[1]}',
-                'duration': 6,
+                'type': 'bar', # Scatter is harder to animate, using Bar for variety
+                'data': self.df.sample(min(10, len(self.df))), 'x': self.cat_cols[0] if self.cat_cols else self.df.index.name,
+                'y': self.num_cols[0], 'title': 'Data Distribution Sample', 'duration': 6
             })
 
+        # Chart 6: Bottom Performers (The "Gaps")
         if self.cat_cols and self.num_cols:
-            grp = self.df.groupby(self.cat_cols[0])[self.num_cols[0]].sum().reset_index()
+            bottom_grp = self.df.groupby(self.cat_cols[0])[self.num_cols[0]].sum().sort_values().reset_index().head(5)
             sections.append({
-                'type': 'bar',
-                'data': grp,
-                'x': self.cat_cols[0],
-                'y': self.num_cols[0],
-                'title': f'{self.num_cols[0]} by {self.cat_cols[0]}',
-                'duration': 6,
+                'type': 'bar', 'data': bottom_grp, 'x': self.cat_cols[0], 'y': self.num_cols[0],
+                'title': 'Opportunities for Growth', 'duration': 6
             })
+            sections.append({'type': 'insight', 'text': 'These areas might need some extra attention next season.', 'duration': 4})
 
-        for col in self.num_cols:
+        # Limit to 8 sections for a better experience
+        sections = sections[:8]
+
+        # Summary Metrics
+        for col in self.num_cols[1:4]:
             metrics.append({
-                'label': f'Total {col}',
+                'label': col,
                 'value': f'{self.df[col].sum():,.0f}',
-                'delta': f'avg {self.df[col].mean():,.0f}',
+                'delta': f'Avg: {self.df[col].mean():,.0f}',
             })
 
         return {
@@ -180,60 +222,42 @@ class HeuristicAnalyser:
 # ─────────────────────────────────────────────────────────────
 def _build_sections_from_ai(df: pd.DataFrame, ai_result: dict):
     sections = []
-
-    # insights
-    for text in ai_result.get('insights', []):
-        sections.append({'type': 'insight', 'text': text, 'duration': 4})
-
-    # charts
-    for cfg in ai_result.get('chart_configs', []):
-        try:
-            chart_type = cfg.get('type', 'bar')
-            x = cfg.get('x_col')
-            y = cfg.get('y_col')
-            color = cfg.get('color_col')
-
-            # Check columns exist
-            if x not in df.columns or y not in df.columns:
-                print(f"[Extractor] Skipping chart — columns missing: {x}, {y}")
+    
+    insights = ai_result.get('insights', [])
+    charts = ai_result.get('chart_configs', [])
+    
+    # Narrative interweaving: Insight -> Chart -> Insight -> Chart
+    for i in range(max(len(insights), len(charts))):
+        if i < len(insights):
+            sections.append({'type': 'insight', 'text': insights[i], 'duration': 4})
+        if i < len(charts):
+            cfg = charts[i]
+            try:
+                chart_type = cfg.get('type', 'bar')
+                x = cfg.get('x_col')
+                y = cfg.get('y_col')
+                
+                if x in df.columns and y in df.columns:
+                    sub = df[[x, y]].copy()
+                    sub[y] = pd.to_numeric(sub[y], errors='coerce')
+                    sub = sub.dropna()
+                    
+                    if not sub.empty:
+                        sections.append({
+                            'type': chart_type,
+                            'data': sub,
+                            'x': x,
+                            'y': y,
+                            'title': cfg.get('title', 'Chart'),
+                            'duration': cfg.get('duration', 6),
+                        })
+            except Exception:
                 continue
-
-            sub = df[[x, y]].copy()
-
-            # Convert numeric safely
-            sub[y] = pd.to_numeric(sub[y], errors='coerce')
-            sub = sub.dropna()
-
-            if sub.empty:
-                print(f"[Extractor] Skipping chart — no numeric data: {y}")
-                continue
-
-            # Add color column if exists
-            if color and color in df.columns:
-                sub[color] = df[color]
-
-            sec = {
-                'type': chart_type,
-                'data': sub,
-                'x': x,
-                'y': y,
-                'title': cfg.get('title', 'Chart'),
-                'duration': cfg.get('duration', 6),
-            }
-
-            if color:
-                sec['color'] = color
-
-            sections.append(sec)
-
-        except Exception as e:
-            print(f"[Extractor] Skipping chart due to error: {e}")
-            continue
 
     # summary
     kpis = ai_result.get('kpi_metrics', [])
     if kpis:
-        sections.append({'type': 'summary', 'metrics': kpis, 'duration': 7})
+        sections.append({'type': 'summary', 'metrics': kpis, 'duration': 8})
 
     return sections
 

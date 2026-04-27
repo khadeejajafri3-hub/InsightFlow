@@ -1,6 +1,7 @@
 import os
 import uuid
 import threading
+import json
 from flask import Flask, render_template, request, send_from_directory, jsonify, url_for
 from werkzeug.utils import secure_filename
 from generator import VideoReportGenerator
@@ -20,43 +21,61 @@ ALLOWED_EXTENSIONS_MUSIC = {'mp3', 'wav'}
 def allowed_file(filename, allowed_set):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_set
 
-# Dictionary to store job status
-jobs = {}
+# Persistent Job Store
+JOBS_FILE = 'jobs.json'
 
-def generate_video_job(job_id, csv_path, music_path, theme, narrate, lang):
-    try:
-        jobs[job_id]['status'] = 'processing'
-        generator = VideoReportGenerator(theme=theme)
-        
-        output_filename = f"report_{job_id}.mp4"
-        output_path = os.path.join(app.config['STATIC_VIDEOS'], output_filename)
-        
-        # We need a base config or it will use the default sample data logic in generator.py
-        # Actually, VideoReportGenerator.generate_report handles csv_path and generates insights.
-        # We can pass an empty config if we provide csv_path.
-        
-        final_path = generator.generate_report(
-            config={'sections': []}, # Will be populated if csv_path is provided
-            output_file=output_path,
-            csv_path=csv_path,
-            music_file=music_path,
-            music_volume=0.15,
-            narrate=narrate,
-            narration_lang=lang
-        )
-        
-        jobs[job_id]['status'] = 'completed'
-        jobs[job_id]['video_url'] = url_for('static', filename=f'videos/{output_filename}')
-    except Exception as e:
-        print(f"Error generating video: {e}")
-        jobs[job_id]['status'] = 'failed'
-        jobs[job_id]['error'] = str(e)
+def load_jobs():
+    if os.path.exists(JOBS_FILE):
+        try:
+            with open(JOBS_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_jobs(jobs_data):
+    with open(JOBS_FILE, 'w') as f:
+        json.dump(jobs_data, f)
+
+jobs = load_jobs()
+
+def update_job_status(job_id, status, video_url=None, error=None):
+    jobs = load_jobs()
+    jobs[job_id] = jobs.get(job_id, {})
+    jobs[job_id]['status'] = status
+    if video_url: jobs[job_id]['video_url'] = video_url
+    if error: jobs[job_id]['error'] = error
+    save_jobs(jobs)
+
+def generate_video_job(job_id, csv_path, music_path, theme, narrate, lang, report_title):
+    with app.app_context():
+        try:
+            update_job_status(job_id, 'processing')
+            generator = VideoReportGenerator(theme=theme)
+            
+            output_filename = f"report_{job_id}.mp4"
+            output_path = os.path.join(app.config['STATIC_VIDEOS'], output_filename)
+            
+            final_path = generator.generate_report(
+                config={'sections': [], 'title': report_title}, 
+                output_file=output_path,
+                csv_path=csv_path,
+                music_file=music_path,
+                music_volume=0.15,
+                narrate=narrate,
+                narration_lang=lang
+            )
+            
+            final_filename = os.path.basename(final_path)
+            update_job_status(job_id, 'completed', video_url=f"/static/videos/{final_filename}")
+        except Exception as e:
+            print(f"Error generating video: {e}")
+            update_job_status(job_id, 'failed', error=str(e))
 
 @app.route('/')
 def home():
     return render_template('home.html')
-
-@app.route('/')
+@app.route('/upload')
 def upload():
     return render_template('upload.html')
 
@@ -64,6 +83,7 @@ def upload():
 def generate():
     csv_file = request.files.get('csv_file')
     music_file = request.files.get('music_file')
+    report_title = request.form.get('report_title', 'Analytics Report')
     theme = request.form.get('theme', 'vibrant')
     narrate = request.form.get('narrate') == 'on'
     lang = request.form.get('lang', 'en')
@@ -87,17 +107,18 @@ def generate():
             music_path = os.path.join(app.config['UPLOAD_FOLDER'], music_filename)
             music_file.save(music_path)
 
-    jobs[job_id] = {'status': 'queued'}
+    update_job_status(job_id, 'queued')
     
     # Run generation in background thread
-    thread = threading.Thread(target=generate_video_job, args=(job_id, csv_path, music_path, theme, narrate, lang))
+    thread = threading.Thread(target=generate_video_job, args=(job_id, csv_path, music_path, theme, narrate, lang, report_title))
     thread.start()
 
     return jsonify({'job_id': job_id})
 
 @app.route('/status/<job_id>')
 def status(job_id):
-    job = jobs.get(job_id)
+    current_jobs = load_jobs()
+    job = current_jobs.get(job_id)
     if not job:
         return jsonify({'error': 'Job not found'}), 404
     return jsonify(job)
