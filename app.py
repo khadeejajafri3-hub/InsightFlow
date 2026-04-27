@@ -10,6 +10,9 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['STATIC_VIDEOS'] = os.path.join('static', 'videos')
 app.config['SECRET_KEY'] = 'video-gen-secret-key'
+app.config['SERVER_NAME'] = 'localhost:5000'
+app.config['APPLICATION_ROOT'] = '/'
+app.config['PREFERRED_URL_SCHEME'] = 'http'
 
 # Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
