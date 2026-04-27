@@ -14,6 +14,9 @@ app.config['SERVER_NAME'] = 'localhost:5000'
 app.config['APPLICATION_ROOT'] = '/'
 app.config['PREFERRED_URL_SCHEME'] = 'http'
 
+# Simple in-memory user store for signup/login
+users = {}
+
 # Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['STATIC_VIDEOS'], exist_ok=True)
@@ -81,6 +84,43 @@ def home():
 @app.route('/upload')
 def upload():
     return render_template('upload.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        action = request.form.get('action')
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if action == 'signup':
+            confirm_password = request.form.get('cpass')
+            if password != confirm_password:
+                flash('Passwords do not match. Please try again.', 'error')
+                return redirect(url_for('register', show='signup'))
+            if email in users:
+                flash('User already exists. Please login.', 'error')
+                return redirect(url_for('register', show='login'))
+            users[email] = password
+            flash('Signup successful! Please login to continue.', 'success')
+            return redirect(url_for('register', show='login'))
+
+        if action == 'login':
+            stored_password = users.get(email)
+            if stored_password and stored_password == password:
+                flash('Login successful! Redirecting to home...', 'success')
+                return redirect(url_for('home'))
+            flash('Invalid email or password. Please try again.', 'error')
+            return redirect(url_for('register', show='login'))
+
+    return render_template('register.html')
+
+@app.route('/login')
+def login():
+    return redirect(url_for('register', show='login'))
 
 @app.route('/generate', methods=['POST'])
 def generate():

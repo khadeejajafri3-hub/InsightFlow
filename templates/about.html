@@ -70,13 +70,16 @@
       border-bottom: 1px solid var(--card-border);
     }
  
-    .nav-logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text-primary);
+    .logo {
+      font-family: 'Sora', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
     }
-    .nav-logo span { color: var(--accent-cyan); }
+    .logo span { color: var(--accent-cyan); -webkit-text-fill-color: var(--accent-cyan); }
  
     .nav-links { display: flex; gap: 2rem; list-style: none; }
     .nav-links a {
@@ -416,7 +419,7 @@
 <body>
  
   <nav>
-    <div class="nav-logo">Insight<span>Flow</span></div>
+    <div class="logo">Insight<span>Flow</span></div>
     <ul class="nav-links">
       <li><a href="#">Home</a></li>
       <li><a href="#">Features</a></li>
